@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# 1. Docker post-install steps
+echo "Adding current user to docker group..."
+sudo groupadd docker
+sudo usermod -aG docker $USER
+newgrp docker
+
+
+# 2. Create a directory for CLI scripts
+SCRIPT_DIR="$HOME/dockerscripts"
+mkdir -p "$SCRIPT_DIR"
+
+# 3. Create ollama andopenwebui CLI files
+
+cat << 'EOF' > "$SCRIPT_DIR/ollama"
+#!/bin/bash
+# Example usage: ./start.sh <container_name>
+docker stop ollama
+docker rm ollama
+docker run -d -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama
+EOF
+
+cat << 'EOF' > "$SCRIPT_DIR/openwebui"
+#!/bin/bash
+# Example usage: ./stop.sh <container_name>
+docker stop openwebui
+docker rm openwebui
+docker run -d --network=host -v open-webui:/app/backend/data -e OLLAMA_BASE_URL=http://127.0.0.1:11434 --name openwebui --restart always ghcr.io/open-webui/open-webui:main
+EOF
+
+chmod +x "$SCRIPT_DIR/ollama" "$SCRIPT_DIR/openwebuih"
+
+echo "Docker post-install steps complete."
+echo "CLI scripts created in $SCRIPT_DIR: ollama, openwebuih"
